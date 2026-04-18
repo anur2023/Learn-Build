@@ -1,35 +1,73 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
 
-function App() {
-  const [count, setCount] = useState(0)
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import DoctorList from "./pages/patient/DoctorList";
+import BookAppointment from "./pages/patient/BookAppointment";
+import MyAppointments from "./pages/patient/MyAppointments";
+import MySlots from "./pages/doctor/MySlots";
+import DoctorAppointments from "./pages/doctor/DoctorAppointments";
+import ManageSpecialties from "./pages/admin/ManageSpecialties";
+import ManageDoctors from "./pages/admin/ManageDoctors";
+import AllAppointments from "./pages/admin/AllAppointments";
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+function ProtectedRoute({ children, allowedRoles }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase())) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
 }
 
-export default App
+function AppRoutes() {
+  return (
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        <Route path="/patient/doctors" element={
+          <ProtectedRoute allowedRoles={["patient"]}><DoctorList /></ProtectedRoute>
+        } />
+        <Route path="/patient/book/:doctorId" element={
+          <ProtectedRoute allowedRoles={["patient"]}><BookAppointment /></ProtectedRoute>
+        } />
+        <Route path="/patient/appointments" element={
+          <ProtectedRoute allowedRoles={["patient"]}><MyAppointments /></ProtectedRoute>
+        } />
+
+        <Route path="/doctor/slots" element={
+          <ProtectedRoute allowedRoles={["doctor"]}><MySlots /></ProtectedRoute>
+        } />
+        <Route path="/doctor/appointments" element={
+          <ProtectedRoute allowedRoles={["doctor"]}><DoctorAppointments /></ProtectedRoute>
+        } />
+
+        <Route path="/admin/specialties" element={
+          <ProtectedRoute allowedRoles={["admin"]}><ManageSpecialties /></ProtectedRoute>
+        } />
+        <Route path="/admin/doctors" element={
+          <ProtectedRoute allowedRoles={["admin"]}><ManageDoctors /></ProtectedRoute>
+        } />
+        <Route path="/admin/appointments" element={
+          <ProtectedRoute allowedRoles={["admin"]}><AllAppointments /></ProtectedRoute>
+        } />
+      </Routes>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
