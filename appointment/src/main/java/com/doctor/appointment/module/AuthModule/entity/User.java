@@ -1,6 +1,8 @@
 package com.doctor.appointment.module.AuthModule.entity;
 
+import com.doctor.appointment.module.AuthModule.entity.RoleName;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,18 +22,16 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RoleName role; // PATIENT / DOCTOR / ADMIN
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    // ─── No-Args Constructor (required by JPA) ───
     public User() {}
 
-    // ─── All-Args Constructor ───
-    public User(Long id, String name, String email, String password, Role role, LocalDateTime createdAt) {
+    public User(Long id, String name, String email, String password, RoleName role, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -40,22 +40,58 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    // ─── Getters & Setters ───
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    // Getters & Setters
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getName() {
+        return name;
+    }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public String getEmail() {
+        return email;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getPassword() {
+        return password;
+    }
+
+    public RoleName getRole() {
+        return role;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRole(RoleName role) {
+        this.role = role;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
