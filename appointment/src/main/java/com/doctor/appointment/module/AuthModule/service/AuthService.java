@@ -3,7 +3,7 @@ package com.doctor.appointment.module.AuthModule.service;
 import com.doctor.appointment.module.AuthModule.dto.*;
 import com.doctor.appointment.module.AuthModule.entity.*;
 import com.doctor.appointment.module.AuthModule.repository.*;
-import com.doctor.appointment.module.AuthModule.security.JwtUtil;
+import com.doctor.appointment.common.security.JwtUtil;
 import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
