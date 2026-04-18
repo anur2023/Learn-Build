@@ -1,5 +1,5 @@
 package com.doctor.appointment.module.AppointmnetModule.service;
-
+import com.doctor.appointment.module.DoctorModule.entity.Doctor;
 import com.doctor.appointment.module.AppointmnetModule.dto.AppointmentRequestDTO;
 import com.doctor.appointment.module.AppointmnetModule.dto.AppointmentResponseDTO;
 import com.doctor.appointment.module.AppointmnetModule.entity.Appointment;
@@ -18,17 +18,18 @@ import java.util.stream.Collectors;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
-    // BUG FIX #2 & #3: Inject SlotRepository to (a) fetch the real
-    // appointment time from the slot and (b) mark the slot as booked.
     private final AvailabilitySlotRepository slotRepository;
+    private final com.doctor.appointment.module.DoctorModule.repository.DoctorRepository doctorRepository; // ADD THIS
 
     public AppointmentService(AppointmentRepository appointmentRepository,
-                              AvailabilitySlotRepository slotRepository) {
+                              AvailabilitySlotRepository slotRepository,
+                              com.doctor.appointment.module.DoctorModule.repository.DoctorRepository doctorRepository) {
         this.appointmentRepository = appointmentRepository;
         this.slotRepository = slotRepository;
+        this.doctorRepository = doctorRepository; // ADD THIS
     }
 
-    // ✅ Book Appointment
+
     @Transactional
     public AppointmentResponseDTO bookAppointment(AppointmentRequestDTO requestDTO) {
 
@@ -38,7 +39,7 @@ public class AppointmentService {
                     throw new RuntimeException("Slot already booked");
                 });
 
-        // BUG FIX #2: Fetch the slot to get the real appointment date/time.
+        // Fetch the slot
         AvailabilitySlot slot = slotRepository.findById(requestDTO.getSlotId())
                 .orElseThrow(() -> new RuntimeException("Slot not found with id: " + requestDTO.getSlotId()));
 
@@ -46,7 +47,21 @@ public class AppointmentService {
             throw new RuntimeException("Slot already booked");
         }
 
-        // BUG FIX #3: Mark the slot as booked so it cannot be double-booked.
+        // ✅ NEW: Fetch the doctor and validate mode compatibility
+        Doctor doctor = doctorRepository.findById(requestDTO.getDoctorId())
+                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + requestDTO.getDoctorId()));
+
+        // Convert DoctorModule.Mode to AppointmentModule.Mode for comparison
+        com.doctor.appointment.module.AppointmnetModule.entity.Mode requestedMode = requestDTO.getMode();
+        String doctorMode = doctor.getMode().name(); // "ONLINE" or "OFFLINE"
+
+        if (!doctorMode.equals(requestedMode.name())) {
+            throw new RuntimeException(
+                    "Doctor only accepts " + doctorMode + " appointments. Cannot book as " + requestedMode.name()
+            );
+        }
+
+        // Mark slot as booked
         slot.setBooked(true);
         slotRepository.save(slot);
 
@@ -56,8 +71,6 @@ public class AppointmentService {
         appointment.setSlotId(requestDTO.getSlotId());
         appointment.setMode(requestDTO.getMode());
         appointment.setStatus(AppointmentStatus.SCHEDULED);
-
-        // BUG FIX #2: Use actual slot date + startTime instead of LocalDateTime.now().
         appointment.setAppointmentTime(
                 LocalDateTime.of(slot.getDate(), slot.getStartTime())
         );
@@ -104,7 +117,7 @@ public class AppointmentService {
             throw new RuntimeException("Invalid status: " + status);
         }
 
-        // BUG FIX #3 (follow-up): When an appointment is cancelled, free up the slot.
+
         if (newStatus == AppointmentStatus.CANCELLED) {
             slotRepository.findById(appointment.getSlotId()).ifPresent(slot -> {
                 slot.setBooked(false);
