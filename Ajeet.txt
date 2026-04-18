@@ -1,0 +1,45 @@
+**Authentication Module (Login & Registration)**
+
+I was responsible for designing and implementing the authentication module of the Doctor Appointment System using Spring Boot and Spring Security.
+
+The module provides secure user registration and login functionality, supporting multiple roles such as PATIENT, DOCTOR, and ADMIN.
+
+---
+
+**Key Features Implemented**
+
+• Developed REST APIs for user registration (`/auth/register`) and login (`/auth/login`) using a layered architecture (Controller → Service → Repository).
+• Implemented input and business validation, including duplicate email checks and role handling.
+• Secured user credentials by encrypting passwords using BCrypt before storing them in the database.
+• Integrated JWT-based authentication to generate tokens upon successful login and enable stateless communication.
+• Implemented a JWT filter to intercept incoming requests, validate tokens, and set authentication in the security context.
+• Configured role-based access control using Spring Security to restrict endpoints based on user roles.
+• Designed DTOs (Request/Response) to ensure clean and secure data transfer between frontend and backend.
+• Used Spring Data JPA repositories for efficient database operations without writing SQL queries.
+• Implemented global exception handling using `@RestControllerAdvice` for consistent error responses.
+• Configured CORS to enable communication between frontend and backend running on different origins.
+
+---
+
+**Technical Flow**
+
+User → API Request → Controller → Service (validation + logic) → Repository → Database
+↓
+JWT Token Generation → Response → Frontend
+↓
+Subsequent Requests → JWT Filter → Security Validation → Controller
+
+---
+
+**Technologies Used**
+
+Spring Boot, Spring Security, JWT, Spring Data JPA, PostgreSQL, REST APIs
+
+---
+
+**Key Learnings**
+
+• Deep understanding of authentication and authorization mechanisms
+• Practical implementation of JWT-based stateless security
+• Clear separation of concerns using layered architecture
+• Handling real-world scenarios like validation, error handling, and role-based access control
