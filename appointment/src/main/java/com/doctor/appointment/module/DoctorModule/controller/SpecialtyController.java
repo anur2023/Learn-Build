@@ -3,6 +3,9 @@ package com.doctor.appointment.module.DoctorModule.controller;
 import com.doctor.appointment.module.DoctorModule.dto.SpecialtyRequestDTO;
 import com.doctor.appointment.module.DoctorModule.dto.SpecialtyResponseDTO;
 import com.doctor.appointment.module.DoctorModule.service.SpecialtyService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,19 +20,22 @@ public class SpecialtyController {
         this.specialtyService = specialtyService;
     }
 
-    // ✅ Admin: Create Specialty
+    // ✅ Admin: Create Specialty  →  POST /api/admin/specialties
+    // BUG FIX #4: Security now covers /api/admin/**, path is consistent.
     @PostMapping("/admin/specialties")
-    public SpecialtyResponseDTO createSpecialty(@RequestBody SpecialtyRequestDTO requestDTO) {
-        return specialtyService.createSpecialty(requestDTO);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SpecialtyResponseDTO> createSpecialty(
+            @RequestBody SpecialtyRequestDTO requestDTO) {
+        return new ResponseEntity<>(specialtyService.createSpecialty(requestDTO), HttpStatus.CREATED);
     }
 
-    // ✅ Patient: Get All Specialties
+    // ✅ All authenticated users: Get All Specialties  →  GET /api/specialties
     @GetMapping("/specialties")
     public List<SpecialtyResponseDTO> getAllSpecialties() {
         return specialtyService.getAllSpecialties();
     }
 
-    // ✅ Get Specialty by ID
+    // ✅ All authenticated users: Get Specialty by ID  →  GET /api/specialties/{id}
     @GetMapping("/specialties/{id}")
     public SpecialtyResponseDTO getSpecialtyById(@PathVariable Long id) {
         return specialtyService.getSpecialtyById(id);

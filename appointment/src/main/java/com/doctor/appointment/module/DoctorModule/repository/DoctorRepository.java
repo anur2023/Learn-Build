@@ -9,15 +9,14 @@ import java.util.Optional;
 
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
-    // Find doctor by userId (since 1:1 mapping with users)
-    Optional<Doctor> findByUserId(Long userId);
+    // BUG FIX #1 (follow-up): After Doctor.user changed from Long userId to a
+    // @ManyToOne User, Spring Data derives the query from the field path.
+    // "findByUserId" must now be "findByUser_Id" to traverse the relationship.
+    Optional<Doctor> findByUser_Id(Long userId);
 
-    // Filter doctors by specialty
     List<Doctor> findBySpecialtyId(Long specialtyId);
 
-    // Filter doctors by mode (ONLINE / OFFLINE)
     List<Doctor> findByMode(Mode mode);
 
-    // Filter by specialty + mode (important for your use case)
     List<Doctor> findBySpecialtyIdAndMode(Long specialtyId, Mode mode);
 }

@@ -1,5 +1,7 @@
 package com.doctor.appointment.module.DoctorModule.service;
 
+import com.doctor.appointment.module.AuthModule.entity.User;
+import com.doctor.appointment.module.AuthModule.repository.UserRepository;
 import com.doctor.appointment.module.DoctorModule.dto.DoctorRequestDTO;
 import com.doctor.appointment.module.DoctorModule.dto.DoctorResponseDTO;
 import com.doctor.appointment.module.DoctorModule.entity.Doctor;
@@ -14,23 +16,30 @@ import java.util.stream.Collectors;
 public class DoctorService {
 
     private final DoctorRepository doctorRepository;
+    // BUG FIX #1 (follow-up): Inject UserRepository to resolve User entity
+    // from userId when creating a Doctor.
+    private final UserRepository userRepository;
 
-    public DoctorService(DoctorRepository doctorRepository) {
+    public DoctorService(DoctorRepository doctorRepository, UserRepository userRepository) {
         this.doctorRepository = doctorRepository;
+        this.userRepository = userRepository;
     }
 
     // ✅ Create Doctor
     public DoctorResponseDTO createDoctor(DoctorRequestDTO requestDTO) {
 
+        // BUG FIX #1: Look up the User entity so Doctor.user relationship is set properly.
+        User user = userRepository.findById(requestDTO.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + requestDTO.getUserId()));
+
         Doctor doctor = new Doctor();
-        doctor.setUserId(requestDTO.getUserId());
+        doctor.setUser(user);
         doctor.setSpecialtyId(requestDTO.getSpecialtyId());
         doctor.setMode(requestDTO.getMode());
         doctor.setExperienceYears(requestDTO.getExperienceYears());
         doctor.setConsultationFee(requestDTO.getConsultationFee());
 
         Doctor savedDoctor = doctorRepository.save(doctor);
-
         return mapToResponse(savedDoctor);
     }
 
@@ -46,7 +55,6 @@ public class DoctorService {
     public DoctorResponseDTO getDoctorById(Long id) {
         Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
         return mapToResponse(doctor);
     }
 
@@ -54,12 +62,11 @@ public class DoctorService {
     public List<DoctorResponseDTO> filterDoctors(Long specialtyId, String mode) {
 
         List<Doctor> doctors;
-
         Mode modeEnum = null;
 
         if (mode != null) {
             try {
-                modeEnum = Mode.valueOf(mode.toUpperCase()); // safe conversion
+                modeEnum = Mode.valueOf(mode.toUpperCase());
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("Invalid mode value");
             }
@@ -84,7 +91,7 @@ public class DoctorService {
     private DoctorResponseDTO mapToResponse(Doctor doctor) {
         return new DoctorResponseDTO(
                 doctor.getId(),
-                doctor.getUserId(),
+                doctor.getUserId(),         // convenience getter added to Doctor entity
                 doctor.getSpecialtyId(),
                 doctor.getMode(),
                 doctor.getExperienceYears(),
