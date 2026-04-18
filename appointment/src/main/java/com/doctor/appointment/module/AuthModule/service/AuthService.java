@@ -12,16 +12,15 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       AuthenticationManager authenticationManager,
                        JwtUtil jwtUtil) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
@@ -32,21 +31,18 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
-        Role.RoleName roleName = request.getRole() != null ? request.getRole() : Role.RoleName.PATIENT;
-
-        Role role = roleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+        RoleName roleName = request.getRole() != null ? request.getRole() : RoleName.PATIENT;
 
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(role);
+        user.setRole(roleName);
 
         userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getEmail(), role.getRoleName().name());
-        return new AuthResponse(token, user.getEmail(), role.getRoleName().name(), user.getId());
+        String token = jwtUtil.generateToken(user.getEmail(), roleName.name());
+        return new AuthResponse(token, user.getEmail(), roleName.name(), user.getId());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -57,8 +53,8 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().getRoleName().name());
-        return new AuthResponse(token, user.getEmail(), user.getRole().getRoleName().name(), user.getId());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        return new AuthResponse(token, user.getEmail(), user.getRole().name(), user.getId());
     }
 
     public User getProfile(String email) {
